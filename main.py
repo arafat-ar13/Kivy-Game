@@ -14,10 +14,6 @@ from kivy.uix.textinput import TextInput
 Config.set('graphics', 'width', '500')
 Config.set('graphics', 'height', '400')
 
-# Fixes to make
-# TODO: Check for username accuracy along with password's
-# TODO: Only show the latest user's email on login page
-# TODO: Don't popup empty field warning if only password and repeat password fields are faulty
 
 class WelcomeScreen(GridLayout):
     def __init__(self, **kwargs):
@@ -104,15 +100,18 @@ class SignupScreen(GridLayout):
                 popup.open()
 
     def check_if_empty(self, instance):
-        if not self.first_name.text or not self.last_name.text or not self.email.text or not self.password.text:
+        if not self.first_name.text or not self.last_name.text or not self.email.text:
             empty_warning = Popup(title="Input fields empty", content=Label(
                 text="You cannot leave the fields empty", color=[1, 0, 0, 1]), size_hint=(0.6, 0.2))
             empty_warning.open()
+
 
     def write_to_file(self):
         first_name = self.first_name.text
         last_name = self.last_name.text
         email = self.email.text
+
+
 
         # Hashing the password for security
         password = self.password.text[::-1]
@@ -126,17 +125,11 @@ class LoginScreen(GridLayout):
         super().__init__(**kwargs)
         self.cols = 1
 
-        if os.path.isfile("login_info.txt"):
-            with open("login_info.txt", "r") as file:
-                _, _, email, *_ = file.read().split(",")
-        else:
-            email = ""
-
         self.inside = GridLayout()
         self.inside.cols = 2
 
         self.inside.add_widget(Label(text="Email: ", color=[0, 0, 1, 1]))
-        self.email = TextInput(text=email, multiline=False)
+        self.email = TextInput(multiline=False)
         self.inside.add_widget(self.email)
 
         self.inside.add_widget(Label(text="Password"))
@@ -147,18 +140,26 @@ class LoginScreen(GridLayout):
 
         self.submit = Button(text="Submit!", font_size=35)
         self.add_widget(self.submit)
-        self.submit.bind(on_press=self.check_password)
+        self.submit.bind(on_press=self.check_input_info)
 
-    def check_password(self, instance):
+    def check_input_info(self, instance):
         with open("login_info.txt", "r") as file:
-            *_, hashed_password = file.read().split(",")
+            *_, email, hashed_password = file.read().split(",")
             real_password = hashed_password[::-1]
 
-            if self.password.text == real_password:
-                self.password.text = ""
+            both_okay = [False, False]
 
-                ebay_who.home_page.update_info("Welcome to your Home Page")
-                ebay_who.screen_manager.current = "Home Page"
+            if self.email.text == email:
+                both_okay[0] = True
+
+            elif self.email.text != email:
+                email_dismatch_warning = Popup(title="Wrong email", content=Label(
+                    text="Your enter email is wrong", color=[1, 0, 0, 1]), size_hint=(0.6, 0.2))
+                email_dismatch_warning.open()
+
+
+            if self.password.text == real_password:
+                both_okay[1] = True
 
             else:
                 self.password.text = ""
@@ -166,6 +167,12 @@ class LoginScreen(GridLayout):
                 popup = Popup(title="Wrong password", content=Label(
                     text="Your password is incorrect", color=[1, 0, 0, 1]), size_hint=(0.6, 0.2))
                 popup.open()
+
+            if False not in both_okay:
+                self.password.text = ""
+
+                ebay_who.home_page.update_info("Welcome to your Home Page")
+                ebay_who.screen_manager.current = "Home Page"
 
 
 class HomePage(GridLayout):
