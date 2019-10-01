@@ -8,7 +8,7 @@ from kivy.uix.button import Button
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.label import Label
 from kivy.uix.popup import Popup
-from kivy.uix.screenmanager import Screen, ScreenManager
+from kivy.uix.screenmanager import Screen, ScreenManager, SwapTransition
 from kivy.uix.textinput import TextInput
 
 Config.set('graphics', 'width', '500')
@@ -105,19 +105,16 @@ class SignupScreen(GridLayout):
                 text="You cannot leave the fields empty", color=[1, 0, 0, 1]), size_hint=(0.6, 0.2))
             empty_warning.open()
 
-
     def write_to_file(self):
         first_name = self.first_name.text
         last_name = self.last_name.text
         email = self.email.text
 
-
-
         # Hashing the password for security
         password = self.password.text[::-1]
 
-        with open("login_info.txt", "w") as file:
-            file.write(f"{first_name},{last_name},{email},{password}")
+        with open("login_info.txt", "a") as file:
+            file.write(f"\n{first_name},{last_name},{email},{password}")
 
 
 class LoginScreen(GridLayout):
@@ -144,35 +141,50 @@ class LoginScreen(GridLayout):
 
     def check_input_info(self, instance):
         with open("login_info.txt", "r") as file:
-            *_, email, hashed_password = file.read().split(",")
-            real_password = hashed_password[::-1]
+            account_query_for = ["email", "password"]
+
+            file_contents = file.readlines()
+            for line in file_contents:
+                *_, email, hashed_password = line.split(",")
+                real_password = hashed_password[::-1]
+                real_password = real_password.strip("\n")
+
+                if email == self.email.text:
+                    account_query_for[0] = email
+                    account_query_for[1] = real_password
+
+            if account_query_for[0] == "email":
+                no_account_found_warning = Popup(title="No matching accounts", content=Label(
+                    text="We couldn't find your account", color=[1, 0, 0, 1]), size_hint=(0.6, 0.2))
+                no_account_found_warning.open()
 
             both_okay = [False, False]
 
-            if self.email.text == email:
-                both_okay[0] = True
+            if account_query_for[0] != "email":
 
-            elif self.email.text != email:
-                email_dismatch_warning = Popup(title="Wrong email", content=Label(
-                    text="Your enter email is wrong", color=[1, 0, 0, 1]), size_hint=(0.6, 0.2))
-                email_dismatch_warning.open()
+                if self.email.text == account_query_for[0]:
+                    both_okay[0] = True
 
+                elif self.email.text != account_query_for[0]:
+                    email_dismatch_warning = Popup(title="Wrong email", content=Label(
+                        text="Your enter email is wrong", color=[1, 0, 0, 1]), size_hint=(0.6, 0.2))
+                    email_dismatch_warning.open()
 
-            if self.password.text == real_password:
-                both_okay[1] = True
+                if self.password.text == account_query_for[1]:
+                    both_okay[1] = True
 
-            else:
-                self.password.text = ""
+                else:
+                    self.password.text = ""
 
-                popup = Popup(title="Wrong password", content=Label(
-                    text="Your password is incorrect", color=[1, 0, 0, 1]), size_hint=(0.6, 0.2))
-                popup.open()
+                    popup = Popup(title="Wrong password", content=Label(
+                        text="Your password is incorrect", color=[1, 0, 0, 1]), size_hint=(0.6, 0.2))
+                    popup.open()
 
-            if False not in both_okay:
-                self.password.text = ""
+                if False not in both_okay:
+                    self.password.text = ""
 
-                ebay_who.home_page.update_info("Welcome to your Home Page")
-                ebay_who.screen_manager.current = "Home Page"
+                    ebay_who.home_page.update_info("Welcome to your Home Page")
+                    ebay_who.screen_manager.current = "Home Page"
 
 
 class HomePage(GridLayout):
@@ -200,7 +212,7 @@ class HomePage(GridLayout):
 
 class MyApp(App):
     def build(self):
-        self.screen_manager = ScreenManager()
+        self.screen_manager = ScreenManager(transition=SwapTransition())
 
         self.welcome_page = WelcomeScreen()
         screen = Screen(name="Welcome Page")
