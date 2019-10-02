@@ -28,14 +28,20 @@ class WelcomeScreen(GridLayout):
         self.login.bind(on_release=self.login_func)
         self.add_widget(self.login)
 
-        animation = Animation(background_color=[0, 0, 1, 1])
+        # + Animation(x=0, duration=1.3)
+        animation = Animation(
+            background_color=[23, 0, 1, 1], duration=1.3, y=90)
+        #animation.repeat = True
         animation.start(self.login)
 
-        self.signup = Button(text="Signup", font_size=30, size_hint=(1.2, 0.5))
+        self.signup = Button(text="Signup", font_size=30,
+                             size_hint=(1.2, 0.5), pos=(0, -105))
         self.signup.bind(on_release=self.signup_func)
         self.add_widget(self.signup)
 
-        animation = Animation(background_color=[0, 1, 0, 1])
+        # + Animation(x=0, y=0)
+        animation = Animation(
+            background_color=[0, 14, 4, 1], duration=1.3, y=0)
         animation.start(self.signup)
 
     def signup_func(self, instance):
@@ -102,7 +108,7 @@ class SignupScreen(GridLayout):
     def check_if_empty(self, instance):
         if not self.first_name.text or not self.last_name.text or not self.email.text:
             empty_warning = Popup(title="Input fields empty", content=Label(
-                text="You cannot leave the fields empty", color=[1, 0, 0, 1]), size_hint=(0.6, 0.2))
+                text="You cannot leave any of the fields empty", color=[1, 0, 0, 1]), size_hint=(0.6, 0.2))
             empty_warning.open()
 
     def write_to_file(self):
@@ -141,17 +147,18 @@ class LoginScreen(GridLayout):
 
     def check_input_info(self, instance):
         with open("login_info.txt", "r") as file:
-            account_query_for = ["email", "password"]
+            account_query_for = ["email", "password", "name"]
 
             file_contents = file.readlines()
             for line in file_contents:
-                *_, email, hashed_password = line.split(",")
+                first_name, last_name, email, hashed_password = line.split(",")
                 real_password = hashed_password[::-1]
                 real_password = real_password.strip("\n")
 
                 if email == self.email.text:
                     account_query_for[0] = email
                     account_query_for[1] = real_password
+                    account_query_for[2] = f"{first_name} {last_name}"
 
             if account_query_for[0] == "email":
                 no_account_found_warning = Popup(title="No matching accounts", content=Label(
@@ -183,7 +190,8 @@ class LoginScreen(GridLayout):
                 if False not in both_okay:
                     self.password.text = ""
 
-                    ebay_who.home_page.update_info("Welcome to your Home Page")
+                    ebay_who.home_page.update_info(
+                        f"Welcome to your Home Page, {account_query_for[2]}")
                     ebay_who.screen_manager.current = "Home Page"
 
 
@@ -194,11 +202,13 @@ class HomePage(GridLayout):
         self.message = Label(halign="center", valign="middle", font_size=35)
         self.message.bind(width=self.update_text_width)
         self.add_widget(self.message)
+        message_animation = Animation(color=[1, 0, 0, 1], duration=.8)
+        message_animation.start(self.message)
 
         # Adding a button to go back to the login screen
-        self.back = Button(text="Logout", font_size=30)
+        self.back = Button(text="Logout", font_size=30, size_hint=(0.6, 0.2))
         self.add_widget(self.back)
-        self.back.bind(on_press=self.logout)
+        self.back.bind(on_release=self.logout)
 
     def update_info(self, message):
         self.message.text = message
