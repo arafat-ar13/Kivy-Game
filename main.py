@@ -1,15 +1,19 @@
+import math
+
 import kivy
 from kivy.animation import Animation
 from kivy.app import App
+from kivy.clock import Clock
 from kivy.config import Config
+from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
 from kivy.uix.gridlayout import GridLayout
-from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.label import Label
 from kivy.uix.popup import Popup
 from kivy.uix.screenmanager import Screen, ScreenManager, SwapTransition
 from kivy.uix.textinput import TextInput
-from kivy.clock import Clock
+
+from game_ai import Ai
 
 Config.set('graphics', 'width', '500')
 Config.set('graphics', 'height', '400')
@@ -28,43 +32,47 @@ class WelcomeScreen(GridLayout):
         self.login.bind(on_release=self.login_func)
         self.add_widget(self.login)
 
+        # Creating animation for the three main buttons of our welcome screen
         animation = Animation(
-            background_color=[23, 0, 1, 1], duration=1.3, y=90)
+            background_color=[23, 0, 1, 1], duration=1.3, y=162)
         animation.start(self.login)
 
         self.signup = Button(text="Signup", font_size=30,
-                             size_hint=(1.2, 0.5), pos=(0, -105))
+                             size_hint=(1.2, 0.5), pos=(0, -117))
         self.signup.bind(on_release=self.signup_func)
         self.add_widget(self.signup)
 
         animation = Animation(
-            background_color=[0, 14, 4, 1], duration=1.3, y=0)
+                background_color=[0, 14, 4, 1], duration=1.28, y=81.5)
         animation.start(self.signup)
 
         self.settings = Button(
-            text="Game settings", font_size=35, size_hint=(1.2, 0.5), pos=(0, -160))
-        self.settings.bind(on_press=self.login_to_admin)
+            text="Game settings", font_size=30, size_hint=(1.2, 0.5), pos=(0, -160))
+        self.settings.bind(on_press=self.settings_page_func)
         self.add_widget(self.settings)
 
         animation = Animation(
-            background_color=[0, 1, 0, 1], duration=1.3, y=180)
+            background_color=[0, 1, 0, 1], duration=1.3, y=0)
         animation.start(self.settings)
 
+    # Creating functions to access our three main screen
     def signup_func(self, instance):
-        tick_tack_toe.screen_manager.current = "Signup Page"
+        tic_tac_toe.screen_manager.current = "Signup Page"
 
     def login_func(self, instance):
-        tick_tack_toe.screen_manager.current = "Login Page"
+        tic_tac_toe.screen_manager.current = "Login Page"
 
-    def login_to_admin(self, instance):
-        tick_tack_toe.screen_manager.current = "Settings Page"
+    def settings_page_func(self, instance):
+        tic_tac_toe.screen_manager.current = "Settings Page"
 
 
 class SignupScreen(GridLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.cols = 1
-
+        
+        # Creating another Layout object inside of SignupScreen as Kivy doesn't allow "columnspan" like Tkinter
+        # We are placing our Label texts inside of the inner Layout while the "Sign up" button is placed on the main "self" Layout
         self.inside = GridLayout()
         self.inside.cols = 2
 
@@ -90,10 +98,18 @@ class SignupScreen(GridLayout):
 
         self.add_widget(self.inside)
 
-        self.signup = Button(text="Sign up", font_size=30)
+        self.signup = Button(text="Sign up", font_size=30, size_hint=(1.0, 0.6))
         self.add_widget(self.signup)
-        self.signup.bind(on_press=self.check_if_empty)
+        self.signup.bind(on_press=self.check_if_empty) # <<<<< It's important to check if the password fields are empty before checking if they are correct or not
         self.signup.bind(on_press=self.check_password)
+
+        # Creating a button to go back to the main screen
+        self.welcome_page = Button(text="Back to main screen", font_size=30, size_hint=(0.8, 0.4))
+        self.add_widget(self.welcome_page)
+        self.welcome_page.bind(on_press=self.back_to_home)
+
+    def back_to_home(self, instance):
+        tic_tac_toe.screen_manager.current = "Welcome Page"
 
     def check_password(self, instance):
         if self.password.text != "":
@@ -104,9 +120,9 @@ class SignupScreen(GridLayout):
                     text="Welcome!!", color=[0, 1, 0, 1]), size_hint=(0.6, 0.2))
                 popup.open()
 
-                tick_tack_toe.home_page.update_info(
+                tic_tac_toe.home_page.update_info(
                     "Welcome to your home page")
-                tick_tack_toe.screen_manager.current = "Home Page"
+                tic_tac_toe.screen_manager.current = "Home Page"
 
             else:
                 self.password.text = self.again_password.text = ""
@@ -141,7 +157,7 @@ class LoginScreen(GridLayout):
         self.inside = GridLayout()
         self.inside.cols = 2
 
-        self.inside.add_widget(Label(text="Email: ", color=[0, 0, 1, 1]))
+        self.inside.add_widget(Label(text="Email:"))
         self.email = TextInput(multiline=False)
         self.inside.add_widget(self.email)
 
@@ -151,25 +167,39 @@ class LoginScreen(GridLayout):
 
         self.add_widget(self.inside)
 
-        self.submit = Button(text="Submit!", font_size=35)
+        self.submit = Button(text="Submit!", font_size=30, size_hint=(1.0, 0.6))
         self.add_widget(self.submit)
         self.submit.bind(on_press=self.check_input_info)
 
+        self.welcome_page = Button(text="Back to main screen", font_size=30, size_hint=(0.8, 0.4))
+        self.add_widget(self.welcome_page)
+        self.welcome_page.bind(on_press=self.back_to_home)
+
+    def back_to_home(self, instance):
+        tic_tac_toe.screen_manager.current = "Welcome Page"
+
     def check_input_info(self, instance):
         with open("login_info.txt", "r") as file:
+            # Creating a list as a "placeholder" for email, password and full name
             account_query_for = ["email", "password", "name"]
 
             file_contents = file.readlines()
             for line in file_contents:
                 first_name, last_name, email, hashed_password = line.split(",")
+                # Unhashing the password and removing any newline characters
                 real_password = hashed_password[::-1]
                 real_password = real_password.strip("\n")
 
                 if email == self.email.text:
+                    # We are first checking if any email in our data file matches the email given by the user
+                    # If an email match is found then the password is set for that email in the text file
+                    # This strictly ties the password with that email only
                     account_query_for[0] = email
                     account_query_for[1] = real_password
                     account_query_for[2] = f"{first_name} {last_name}"
 
+            # If the first item in account_query_for is "email" that means that the system didn't find any match,
+            # if it had found then it would have updated the items in account_query_for with the correct credentials
             if account_query_for[0] == "email":
                 no_account_found_warning = Popup(title="No matching accounts", content=Label(
                     text="We couldn't find your account", color=[1, 0, 0, 1]), size_hint=(0.6, 0.2))
@@ -190,9 +220,9 @@ class LoginScreen(GridLayout):
                 if allowance:
                     self.password.text = ""
 
-                    tick_tack_toe.home_page.update_info(
+                    tic_tac_toe.home_page.update_info(
                         f"Welcome to your Home Page, {account_query_for[2]}")
-                    tick_tack_toe.screen_manager.current = "Home Page"
+                    tic_tac_toe.screen_manager.current = "Home Page"
 
 
 class HomeScreen(GridLayout):
@@ -223,63 +253,158 @@ class HomeScreen(GridLayout):
         self.message.text_size = (self.message.width*0.9, None)
 
     def enter_game_screen(self, *_):
-        tick_tack_toe.screen_manager.current = "Game Page"
+        tic_tac_toe.screen_manager.current = "Game Page"
 
     def logout(self, *_):
-        tick_tack_toe.screen_manager.current = "Login Page"
+        tic_tac_toe.screen_manager.current = "Login Page"
 
 
 class GameScreen(GridLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        # Our main screen for gaming
+        self.cols = 3
+        self.rows = 3
+        self.buttons_dict = {}
+        self.moves_counter = 0
 
-        self.cols = 1
+        # Setting up a list to store the game input options
+        self.fill_options = ["O", "X"]
 
-        self.welcome_label = Label(text="Welcome bee ach")
-        self.add_widget(self.welcome_label)
+        for button_count in range(self.cols * self.rows):
+            self.buttons_dict["Button_" + str(button_count)] = Button(halign="center", valign="middle", font_size=40, on_press=self.fill_button)
+        
+        for button in self.buttons_dict.values():
+            self.add_widget(button)
 
+        # Creating the AI instantiation 
+        self.ai = Ai(self.cols * self.rows, [position.pos for position in self.buttons_dict.values()], self.fill_options[1])
+
+    def fill_button(self, instance):
+        self.ai.calculate_move(instance.pos)
+        
+        instance.text = self.fill_options[0]
+        self.moves_counter += 1
+        
+        computer_move = self.ai.ai_move
+        for button in self.buttons_dict.values():
+            if computer_move == button.pos:
+                button.text = self.ai.option
+                if self.moves_counter < 9:
+                    self.moves_counter += 1
+
+        # Checks if the board is out of empty tiles
+        if self.moves_counter == (self.cols * self.rows):
+            pop_up_layout = BoxLayout(orientation='vertical', padding=(10))
+
+            popup = Popup(title="Game over", content=pop_up_layout, size_hint=(0.8, 0.7))
+
+            game_over_msg = Label(text="The game is over", color=[0, 0, 1, 1])
+            pop_up_layout.add_widget(game_over_msg)
+
+            back_to_user_page = Button(text="Go back", on_press=lambda instance: self.reset_board(popup, True))
+            another_game = Button(text="Or...player another game!!", on_press=lambda instance: self.reset_board(popup, False))
+
+            pop_up_layout.add_widget(back_to_user_page)
+            pop_up_layout.add_widget(another_game)
+            
+            popup.open()
+
+    def reset_board(self, popup, back_to_user_home):
+
+        for button in self.buttons_dict.values():
+            button.text = ""
+
+        popup.dismiss()
+
+        self.moves_counter = 0
+        self.ai.available_tiles = self.ai.all_pos[:]
+
+        if back_to_user_home:
+            tic_tac_toe.screen_manager.current = "Home Page"
+                
 
 class SettingsScreen(GridLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        self.rows = 3
+        self.rows = 4
 
+        # A settings to manage and view the high scores
         self.high_scores_button = Button(text="View high scores", size_hint=(
             0.5, 0.2), background_color=[1, 1, 0, 1], on_press=self.view_high_scores)
         self.add_widget(self.high_scores_button)
 
+        # This resets all the player info from the app. Use with caution
         self.reset_info_button = Button(text="Reset game info", size_hint=(
-            0.5, 0.2), background_color=[1, 0, 0, 0.75], on_press=self.reset_game)
+            0.5, 0.2), background_color=[1, 0, 0, 0.75], on_press=self.manage_game_reset)
         self.add_widget(self.reset_info_button)
 
+        # A settings to manage the players
         self.manage_players_button = Button(
             text="Manage players", size_hint=(0.5, 0.2), on_press=self.manage_players)
         self.add_widget(self.manage_players_button)
 
+        # A settings to go back to the welcome screen
+        self.welcome_page = Button(text="Back to main screen", size_hint=(0.3, 0.2), on_press=self.back_to_home)
+        self.add_widget(self.welcome_page)
+
+    def back_to_home(self, instance):
+        tic_tac_toe.screen_manager.current = "Welcome Page"
+
     def view_high_scores(self, instance):
         pass
 
-    def reset_game(self, instance):
-        if instance != None:
-            with open("login_info.txt", "r+") as file:
-                first_line = file.readline()
+    def manage_game_reset(self, instance):
+        pop_up_layout = BoxLayout(orientation='vertical', padding=(10))
 
-                file.seek(0)
-                file.truncate()
-                file.write(first_line)
+        deletion_message = Label(text="Are you sure? This cannot be undone.", color=[1, 0, 0, 1])
+        pop_up_layout.add_widget(deletion_message)
 
-        # Clearing the players screen and adding only the back button
-        tick_tack_toe.players_page.canvas.clear()
+        yes_button = Button(text="Yes reset the game")
+        no_button = Button(
+            text="Don't reset my game!!")
 
-        tick_tack_toe.players_page.cols = 1
-        tick_tack_toe.players_page.go_back = Button(text="Go back to settings", size_hint=(
-            0.8, 0.19), on_press=tick_tack_toe.players_page.back_to_settings)
-        tick_tack_toe.players_page.add_widget(
-            tick_tack_toe.players_page.go_back)
+        pop_up_layout.add_widget(yes_button)
+        pop_up_layout.add_widget(no_button)
+
+
+        def reset_game(fake_instance):     # <<<<<< This is named "fake_instance" so that it doesn't get mixed with the main "instance" in the outer function manage_game_reset   
+            if instance != None:
+                with open("login_info.txt", "r+") as file:
+                    first_line = file.readline()
+
+                    file.seek(0)
+                    file.truncate()
+                    file.write(first_line)
+
+            # Clearing the players screen and adding only the back button
+            tic_tac_toe.players_page.canvas.clear()
+
+            tic_tac_toe.players_page.cols = 1
+            tic_tac_toe.players_page.go_back = Button(text="Go back to settings", size_hint=(
+                0.8, 0.19), on_press=tic_tac_toe.players_page.back_to_settings)
+            tic_tac_toe.players_page.add_widget(
+                tic_tac_toe.players_page.go_back)
+
+            deletion_message.text = "Success! This popup will dismiss in 2 seconds."
+            deletion_message.color = [0, 1, 0, 1]
+
+            Clock.schedule_once(popup.dismiss, 2)
+                    
+        
+        popup = Popup(title='Game reset confirmation', title_size=(30),
+                              title_align='center', content=pop_up_layout,
+                              size_hint=(None, None), size=(400, 400),
+                              auto_dismiss=False)
+
+        yes_button.bind(on_press=reset_game)
+        no_button.bind(on_press=popup.dismiss)
+
+        popup.open()
 
     def manage_players(self, instance):
-        tick_tack_toe.screen_manager.current = "Manage Players Page"
+        tic_tac_toe.screen_manager.current = "Manage Players Page"
 
 
 class ManagePlayers(GridLayout):
@@ -303,7 +428,7 @@ class ManagePlayers(GridLayout):
             def manage_player_deletion(instance):
                 pop_up_layout = BoxLayout(orientation='vertical', padding=(10))
 
-                deletion_message =Label(text="Are you sure? You cannot undo this.", color=[1, 0, 0, 1])
+                deletion_message = Label(text="Are you sure? You cannot undo this.", color=[1, 0, 0, 1])
                 pop_up_layout.add_widget(deletion_message)
 
                 yes_button = Button(text="Yes delete the player")
@@ -313,17 +438,18 @@ class ManagePlayers(GridLayout):
                 pop_up_layout.add_widget(yes_button)
                 pop_up_layout.add_widget(no_button)
 
-                def delete_player(fake_instance):
+                def delete_player(fake_instance):   # <<<<<< This is named "fake_instance" so that it doesn't get mixed with the main "instance" in the outer function manage_player_deletion
 
                     for label in labels_dict.values():
                         if label.text in instance.text:
                             for data in file_contents:
                                 line_index = file_contents.index(data) + 1
 
-                                if label.text.replace(" ", "") == "".join(data.split(",")[0] + data.split(",")[1]):
+                                if label.text.replace(" ", "") == "".join(data.split(",")[0] + data.split(",")[1]):  # <<<<<< Stripping the whitespace between first and last name
 
                                     with open("login_info.txt", "r") as f:
                                         lines = f.readlines()
+                                        # This checks if the player information if the very last entry in our data file or not
                                         if line_index == len(lines) - 1:
                                             last_line_stripped = lines[-2].strip(
                                                 "\n")
@@ -370,7 +496,7 @@ class ManagePlayers(GridLayout):
         self.add_widget(self.go_back)
 
     def back_to_settings(self, instance):
-        tick_tack_toe.screen_manager.current = "Settings Page"
+        tic_tac_toe.screen_manager.current = "Settings Page"
 
 
 class MyApp(App):
@@ -424,5 +550,5 @@ class MyApp(App):
 
 
 if __name__ == "__main__":
-    tick_tack_toe = MyApp()
-    tick_tack_toe.run()
+    tic_tac_toe = MyApp()
+    tic_tac_toe.run()
