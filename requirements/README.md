@@ -2,6 +2,7 @@
 
 ### All the instructions below assume that you have cloned this repo and have a directory name "Kivy-Game" on your machine. It is also assumed that you are using some kind of a Terminal to carry out your appropritate instructions. And it is also assumed that you have your preferred environment manager installed on your machine (conda/pipenv/virtualenv) except if you are using venv which comes with the Standard Library
 
+
 ## Run with a Conda environment
 If you have Anaconda or Miniconda installed and you use Conda to manage your packages and virtual environments, then you can simply use the YAML file to create a new environment that has all the Kivy requirements:
 * Navigate to the cloned directory.
@@ -14,19 +15,23 @@ If you have Anaconda or Miniconda installed and you use Conda to manage your pac
 ## Run with Pipenv
 If you use Pipenv then you can use the requirements.txt file included to run the Kivy app
 * Navigate to the cloned directory
-* Make a new directory named "Kivy-Development" with `mkdir "Kivy-Development"` and navigate to that directory.
-* Run `pipenv install -r ../requirements/requirements.txt` to create the environment in the "Kivy-Development" directory. This directory should now contain Pip and Piplock files.
+* Make a new directory named "kivy-pipenv" with `mkdir "kivy-pipenv"` and navigate to that directory.
+* To create an environment in the "kivy-pipenv" directory and install Kivy and its dependencies from the requirements.txt file at once run:
+*  **If using Command Promt**:
+  * `pipenv install -r ..\requirements\requirements.txt`
+* **If using Linux/Mac/Git Bash on Windows/WSL/or any Unix terminal**:
+  * `pipenv install -r ../requirements/requirements.txt`  
 
-This will create a new Pipenv environment named "Kivy-Game" which is the name of your current directory
-* Run `pipenv shell` while you are still in "Kivy-Development" directory to activate the virtual environment
+This directory should now contain Pipfile and Piplock files.
+* Run `pipenv shell` while you are still in "kivy-pipenv" directory to activate the virtual environment
 * Then move up one directory and simply run `python main.py` to run the game
 
 
 ## Run with Virtualenv
 If you use virtualenv to manage and create your enviroments then follow these instructions
 * Navigate to the cloned directory
-* Run `virtualenv kivy-development` to create a new environment directory. 
-* Don't navigate to the new "kivy-development" directory and while still in the cloned directory, run:
+* Run `virtualenv kivy-virtualenv` to create a new environment directory. 
+* Don't navigate to the new "kivy-virtualenv" directory and while still in the cloned directory, run:
 * **On Windows (using Command Prompt)**:
   * `kivy-development\Scripts\activate`
 * **On Windows (using Git Bash or WSL)**:
