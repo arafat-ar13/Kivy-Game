@@ -1,4 +1,5 @@
 import math
+import os
 
 import kivy
 from kivy.animation import Animation
@@ -18,6 +19,13 @@ from game_ai import Ai
 Config.set('graphics', 'width', '500')
 Config.set('graphics', 'height', '400')
 
+if not os.path.isfile("login_info.txt"):
+    with open("login_info.txt", "w+") as file:
+        file.write("first_name,last_name,email,password")
+
+if not os.path.isfile("highscores.txt"):
+    with open("highscores.txt", "w+") as file:
+        file.write("name,player_score,ai_score")
 
 class WelcomeScreen(GridLayout):
     def __init__(self, **kwargs):
