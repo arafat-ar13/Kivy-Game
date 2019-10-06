@@ -43,7 +43,7 @@ class WelcomeScreen(GridLayout):
         self.add_widget(self.signup)
 
         animation = Animation(
-                background_color=[0, 14, 4, 1], duration=1.28, y=81.5)
+            background_color=[0, 14, 4, 1], duration=1.28, y=81.5)
         animation.start(self.signup)
 
         self.settings = Button(
@@ -70,7 +70,7 @@ class SignupScreen(GridLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.cols = 1
-        
+
         # Creating another Layout object inside of SignupScreen as Kivy doesn't allow "columnspan" like Tkinter
         # We are placing our Label texts inside of the inner Layout while the "Sign up" button is placed on the main "self" Layout
         self.inside = GridLayout()
@@ -98,13 +98,16 @@ class SignupScreen(GridLayout):
 
         self.add_widget(self.inside)
 
-        self.signup = Button(text="Sign up", font_size=30, size_hint=(1.0, 0.6))
+        self.signup = Button(text="Sign up", font_size=30,
+                             size_hint=(1.0, 0.6))
         self.add_widget(self.signup)
-        self.signup.bind(on_press=self.check_if_empty) # <<<<< It's important to check if the password fields are empty before checking if they are correct or not
+        # <<<<< It's important to check if the password fields are empty before checking if they are correct or not
+        self.signup.bind(on_press=self.check_if_empty)
         self.signup.bind(on_press=self.check_password)
 
         # Creating a button to go back to the main screen
-        self.welcome_page = Button(text="Back to main screen", font_size=30, size_hint=(0.8, 0.4))
+        self.welcome_page = Button(
+            text="Back to main screen", font_size=30, size_hint=(0.8, 0.4))
         self.add_widget(self.welcome_page)
         self.welcome_page.bind(on_press=self.back_to_home)
 
@@ -152,6 +155,9 @@ class SignupScreen(GridLayout):
 class LoginScreen(GridLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+
+        # Creating a list as a "placeholder" for email, password and full name
+        self.account_query_for = ["email", "password", "name"]
         self.cols = 1
 
         self.inside = GridLayout()
@@ -167,11 +173,13 @@ class LoginScreen(GridLayout):
 
         self.add_widget(self.inside)
 
-        self.submit = Button(text="Submit!", font_size=30, size_hint=(1.0, 0.6))
+        self.submit = Button(text="Submit!", font_size=30,
+                             size_hint=(1.0, 0.6))
         self.add_widget(self.submit)
         self.submit.bind(on_press=self.check_input_info)
 
-        self.welcome_page = Button(text="Back to main screen", font_size=30, size_hint=(0.8, 0.4))
+        self.welcome_page = Button(
+            text="Back to main screen", font_size=30, size_hint=(0.8, 0.4))
         self.add_widget(self.welcome_page)
         self.welcome_page.bind(on_press=self.back_to_home)
 
@@ -180,8 +188,6 @@ class LoginScreen(GridLayout):
 
     def check_input_info(self, instance):
         with open("login_info.txt", "r") as file:
-            # Creating a list as a "placeholder" for email, password and full name
-            account_query_for = ["email", "password", "name"]
 
             file_contents = file.readlines()
             for line in file_contents:
@@ -194,21 +200,21 @@ class LoginScreen(GridLayout):
                     # We are first checking if any email in our data file matches the email given by the user
                     # If an email match is found then the password is set for that email in the text file
                     # This strictly ties the password with that email only
-                    account_query_for[0] = email
-                    account_query_for[1] = real_password
-                    account_query_for[2] = f"{first_name} {last_name}"
+                    self.account_query_for[0] = email
+                    self.account_query_for[1] = real_password
+                    self.account_query_for[2] = f"{first_name} {last_name}"
 
             # If the first item in account_query_for is "email" that means that the system didn't find any match,
             # if it had found then it would have updated the items in account_query_for with the correct credentials
-            if account_query_for[0] == "email":
+            if self.account_query_for[0] == "email":
                 no_account_found_warning = Popup(title="No matching accounts", content=Label(
                     text="We couldn't find your account", color=[1, 0, 0, 1]), size_hint=(0.6, 0.2))
                 no_account_found_warning.open()
 
             allowance = False
-            if account_query_for[0] != "email":
+            if self.account_query_for[0] != "email":
 
-                if self.password.text == account_query_for[1]:
+                if self.password.text == self.account_query_for[1]:
                     allowance = True
                 else:
                     self.password.text = ""
@@ -221,7 +227,7 @@ class LoginScreen(GridLayout):
                     self.password.text = ""
 
                     tic_tac_toe.home_page.update_info(
-                        f"Welcome to your Home Page, {account_query_for[2]}")
+                        f"Welcome to your Home Page, {self.account_query_for[2]}")
                     tic_tac_toe.screen_manager.current = "Home Page"
 
 
@@ -271,58 +277,107 @@ class GameScreen(GridLayout):
         # Setting up a list to store the game input options
         self.fill_options = ["O", "X"]
 
+        # Creating a board made of buttons
         for button_count in range(self.cols * self.rows):
-            self.buttons_dict["Button_" + str(button_count)] = Button(halign="center", valign="middle", font_size=40, on_press=self.fill_button)
-        
-        for button in self.buttons_dict.values():
-            self.add_widget(button)
+            self.buttons_dict["Button_" + str(button_count)] = [Button(
+                halign="center", valign="middle", font_size=40, on_press=self.fill_button)]
 
-        # Creating the AI instantiation 
-        self.ai = Ai(self.cols * self.rows, [position.pos for position in self.buttons_dict.values()], self.fill_options[1])
+        for count, button in enumerate(self.buttons_dict.values(), start=1):
+            self.add_widget(button[0])
+            # Making IDs of each button for tracking buttons
+            button.append(count)
+
+        # Creating the AI instantiation
+        self.ai = Ai(self.cols * self.rows, [position[0].pos for position in self.buttons_dict.values()], [
+                     button[1] for button in self.buttons_dict.values()], self.fill_options)
 
     def fill_button(self, instance):
-        self.ai.calculate_move(instance.pos)
-        
-        instance.text = self.fill_options[0]
-        self.moves_counter += 1
-        
-        computer_move = self.ai.ai_move
-        for button in self.buttons_dict.values():
-            if computer_move == button.pos:
-                button.text = self.ai.option
-                if self.moves_counter < 9:
-                    self.moves_counter += 1
+        if not hasattr(instance, "pressed") or not instance.pressed:
+            self.ai.calculate_move(instance.pos)
 
-        # Checks if the board is out of empty tiles
-        if self.moves_counter == (self.cols * self.rows):
+            instance.text = self.fill_options[0]
+            setattr(instance, "pressed", True)
+
+            self.moves_counter += 1
+
+        computer_move = self.ai.ai_move
+        computer_button_instance = ""
+        computer_button_id = 0
+        for button in self.buttons_dict.values():
+
+            if computer_move == button[0].pos:
+                if not hasattr(button[0], "pressed") or not button[0].pressed:
+                    button[0].text = self.ai.ai_option
+                    computer_button_instance = button[0]
+                    computer_button_id = button[1]
+                    setattr(button[0], "pressed", True)
+                    setattr(button[0], "checked_winner_on", True)
+
+                    if self.moves_counter < 9:
+                        self.moves_counter += 1
+
+        instance_id = 0
+        for button in self.buttons_dict.values():
+            if button[0] == instance:
+                instance_id = button[1]
+
+        if not hasattr(instance, "checked_winner_on"):
+            winner = self.ai.decide_winner(
+                self.buttons_dict, instance, computer_button_instance, instance_id, computer_button_id)
+            setattr(instance, "checked_winner_on", True)
+
+        Clock.schedule_once(lambda instance: self.game_over(self.moves_counter, winner), 0.6)
+
+    def game_over(self, moves_counter, winner):
+        if self.moves_counter == (self.cols * self.rows) or winner != "":
             pop_up_layout = BoxLayout(orientation='vertical', padding=(10))
 
-            popup = Popup(title="Game over", content=pop_up_layout, size_hint=(0.8, 0.7))
+            # Setting up the popup_title depending on who the winner is or if no one won
+            popup_title = f"{tic_tac_toe.login_page.account_query_for[2]} is the winner!" if winner == "Player" else "AI beat your ass!"
+            popup = Popup(title=popup_title if winner != "" else "It's a tie!!",
+                          content=pop_up_layout, size_hint=(0.8, 0.7))
 
-            game_over_msg = Label(text="The game is over", color=[0, 0, 1, 1])
+            # Setting up the popup message depending on who won. ALso setting up the color
+            popup_msg = "You have won the game!!" if winner == "Player" else "You have lost the game!!"
+            popup_msg_color = [
+                0, 1, 0, 1] if winner == "Player" else [1, 0, 0, 1]
+            game_over_msg = Label(text=popup_msg if winner != "" else "The game is over. It is a tie!!",
+                                  color=popup_msg_color if winner != "" else [1, 1, 1, 1])
+
             pop_up_layout.add_widget(game_over_msg)
 
-            back_to_user_page = Button(text="Go back", on_press=lambda instance: self.reset_board(popup, True))
-            another_game = Button(text="Or...player another game!!", on_press=lambda instance: self.reset_board(popup, False))
+            back_to_user_page = Button(
+                text="Go back", on_press=lambda instance: self.reset_board(popup, True))
+            another_game = Button(text="Or...player another game!!",
+                                  on_press=lambda instance: self.reset_board(popup, False))
 
             pop_up_layout.add_widget(back_to_user_page)
             pop_up_layout.add_widget(another_game)
-            
+
             popup.open()
 
     def reset_board(self, popup, back_to_user_home):
 
         for button in self.buttons_dict.values():
-            button.text = ""
+            button[0].text = ""
+            setattr(button[0], "pressed", False)
+            if hasattr(button[0], "checked_winner_on"):
+                delattr(button[0], "checked_winner_on")
+
+            button[0].background_normal = "atlas://data/images/defaulttheme/button"
+            button[0].background_color = (1, 1, 1, 1)
 
         popup.dismiss()
 
         self.moves_counter = 0
         self.ai.available_tiles = self.ai.all_pos[:]
 
+        self.ai.player_moves.clear()
+        self.ai.ai_moves.clear()
+
         if back_to_user_home:
             tic_tac_toe.screen_manager.current = "Home Page"
-                
+
 
 class SettingsScreen(GridLayout):
     def __init__(self, **kwargs):
@@ -346,7 +401,8 @@ class SettingsScreen(GridLayout):
         self.add_widget(self.manage_players_button)
 
         # A settings to go back to the welcome screen
-        self.welcome_page = Button(text="Back to main screen", size_hint=(0.3, 0.2), on_press=self.back_to_home)
+        self.welcome_page = Button(text="Back to main screen", size_hint=(
+            0.3, 0.2), on_press=self.back_to_home)
         self.add_widget(self.welcome_page)
 
     def back_to_home(self, instance):
@@ -358,7 +414,8 @@ class SettingsScreen(GridLayout):
     def manage_game_reset(self, instance):
         pop_up_layout = BoxLayout(orientation='vertical', padding=(10))
 
-        deletion_message = Label(text="Are you sure? This cannot be undone.", color=[1, 0, 0, 1])
+        deletion_message = Label(
+            text="Are you sure? This cannot be undone.", color=[1, 0, 0, 1])
         pop_up_layout.add_widget(deletion_message)
 
         yes_button = Button(text="Yes reset the game")
@@ -368,8 +425,8 @@ class SettingsScreen(GridLayout):
         pop_up_layout.add_widget(yes_button)
         pop_up_layout.add_widget(no_button)
 
-
-        def reset_game(fake_instance):     # <<<<<< This is named "fake_instance" so that it doesn't get mixed with the main "instance" in the outer function manage_game_reset   
+        # <<<<<< This is named "fake_instance" so that it doesn't get mixed with the main "instance" in the outer function manage_game_reset
+        def reset_game(fake_instance):
             if instance != None:
                 with open("login_info.txt", "r+") as file:
                     first_line = file.readline()
@@ -391,12 +448,11 @@ class SettingsScreen(GridLayout):
             deletion_message.color = [0, 1, 0, 1]
 
             Clock.schedule_once(popup.dismiss, 2)
-                    
-        
+
         popup = Popup(title='Game reset confirmation', title_size=(30),
-                              title_align='center', content=pop_up_layout,
-                              size_hint=(None, None), size=(400, 400),
-                              auto_dismiss=False)
+                      title_align='center', content=pop_up_layout,
+                      size_hint=(None, None), size=(400, 400),
+                      auto_dismiss=False)
 
         yes_button.bind(on_press=reset_game)
         no_button.bind(on_press=popup.dismiss)
@@ -428,7 +484,8 @@ class ManagePlayers(GridLayout):
             def manage_player_deletion(instance):
                 pop_up_layout = BoxLayout(orientation='vertical', padding=(10))
 
-                deletion_message = Label(text="Are you sure? You cannot undo this.", color=[1, 0, 0, 1])
+                deletion_message = Label(
+                    text="Are you sure? You cannot undo this.", color=[1, 0, 0, 1])
                 pop_up_layout.add_widget(deletion_message)
 
                 yes_button = Button(text="Yes delete the player")
@@ -438,14 +495,16 @@ class ManagePlayers(GridLayout):
                 pop_up_layout.add_widget(yes_button)
                 pop_up_layout.add_widget(no_button)
 
-                def delete_player(fake_instance):   # <<<<<< This is named "fake_instance" so that it doesn't get mixed with the main "instance" in the outer function manage_player_deletion
+                # <<<<<< This is named "fake_instance" so that it doesn't get mixed with the main "instance" in the outer function manage_player_deletion
+                def delete_player(fake_instance):
 
                     for label in labels_dict.values():
                         if label.text in instance.text:
                             for data in file_contents:
                                 line_index = file_contents.index(data) + 1
 
-                                if label.text.replace(" ", "") == "".join(data.split(",")[0] + data.split(",")[1]):  # <<<<<< Stripping the whitespace between first and last name
+                                # <<<<<< Stripping the whitespace between first and last name
+                                if label.text.replace(" ", "") == "".join(data.split(",")[0] + data.split(",")[1]):
 
                                     with open("login_info.txt", "r") as f:
                                         lines = f.readlines()
@@ -464,7 +523,6 @@ class ManagePlayers(GridLayout):
                     deletion_message.color = [0, 1, 0, 1]
 
                     Clock.schedule_once(popup.dismiss, 2)
-                    
 
                 popup = Popup(title='Player deletion confirmation', title_size=(30),
                               title_align='center', content=pop_up_layout,
