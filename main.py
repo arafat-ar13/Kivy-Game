@@ -22,7 +22,7 @@ Config.set('graphics', 'height', '400')
 
 if not os.path.isfile("login_info.txt"):
     with open("login_info.txt", "w+") as file:
-        file.write("first_name,last_name,email,password")
+        file.write("first_name,last_name,email,password\n")
 
 
 class WelcomeScreen(GridLayout):
@@ -155,10 +155,10 @@ class SignupScreen(GridLayout):
         password = self.password.text[::-1]
 
         with open("login_info.txt", "a") as file:
-            file.write(f"\n{first_name},{last_name},{email},{password}")
+            file.write(f"{first_name},{last_name},{email},{password}\n")
         with open("highscores.txt", "a") as file:
             file.write(f"{first_name} {last_name},{0}\n")
-        
+
         tic_tac_toe.login_page.account_query_for[2] = f"{first_name} {last_name}"
 
 
@@ -252,12 +252,14 @@ class HomeScreen(GridLayout):
         message_animation.start(self.message)
 
         # Adding a button to go back to the login screen
-        self.back = Button(text="Start your game", font_size=30, size_hint=(0.6, 0.2))
+        self.back = Button(text="Start your game",
+                           font_size=30, size_hint=(0.6, 0.2))
         self.add_widget(self.back)
         self.back.bind(on_release=self.enter_game_screen)
 
         # Adding a button to go the highscores screen
-        self.highscores = Button(text="View you scores", font_size=28, size_hint=(0.55, 0.19))
+        self.highscores = Button(
+            text="View you scores", font_size=28, size_hint=(0.55, 0.19))
         self.add_widget(self.highscores)
         self.highscores.bind(on_press=self.enter_scores_screen)
 
@@ -277,6 +279,7 @@ class HomeScreen(GridLayout):
         tic_tac_toe.screen_manager.current = "Game Page"
 
     def enter_scores_screen(self, *_):
+        tic_tac_toe.highscores_page.here_from = "Home Page"
         tic_tac_toe.screen_manager.current = "HighScores Page"
 
     def logout(self, *_):
@@ -347,7 +350,8 @@ class GameScreen(GridLayout):
         if winner != "" and winner == "Player":
             tie_player(tic_tac_toe.login_page.account_query_for[2])
 
-        Clock.schedule_once(lambda instance: self.game_over(self.moves_counter, winner), 0.6)
+        Clock.schedule_once(lambda instance: self.game_over(
+            self.moves_counter, winner), 0.6)
 
     def game_over(self, moves_counter, winner):
         if self.moves_counter == (self.cols * self.rows) or winner != "":
@@ -399,10 +403,53 @@ class GameScreen(GridLayout):
         if back_to_user_home:
             tic_tac_toe.screen_manager.current = "Home Page"
 
+
 class HighScoresScreen(GridLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.here_from = ""
+
         self.cols = 1
+        self.file = open("highscores.txt", "r")
+        self.inside = GridLayout()
+        self.inside.cols = 2
+        self.inside.rows = len(self.file.readlines())
+        self.rows = self.inside.rows
+        self.file.close()
+
+        self.name_label = Label(text="Name")
+        self.inside.add_widget(self.name_label)
+        self.score_label = Label(text="Score")
+        self.inside.add_widget(self.score_label)
+
+        with open("highscores.txt", "r") as file:
+            contents = file.readlines()[1:]
+
+            scores = []
+            names = []
+            for entry in contents:
+                name, score = entry.strip("\n").split(",")
+
+                scores.append(int(score))
+                names.append(name)
+
+            # This sorts the names according to who has the highest points
+            names = [x for _, x in sorted(zip(scores, names), reverse=True)]
+            scores = sorted(scores, reverse=True)
+
+            for name, score in zip(names, scores):
+
+                self.inside.add_widget(Label(text=f"{name}"))
+                self.inside.add_widget(Label(text=str(score)))
+
+        self.add_widget(self.inside)
+
+        self.back_button = Button(text="Go back", size_hint=(0.2, 0.18))
+        self.add_widget(self.back_button)
+        self.back_button.bind(on_press=self.go_back)
+    
+    def go_back(self, instance):
+        tic_tac_toe.screen_manager.current = self.here_from
 
 
 class SettingsScreen(GridLayout):
@@ -435,7 +482,8 @@ class SettingsScreen(GridLayout):
         tic_tac_toe.screen_manager.current = "Welcome Page"
 
     def view_high_scores(self, instance):
-        pass
+        tic_tac_toe.highscores_page.here_from = "Settings Page"
+        tic_tac_toe.screen_manager.current = "HighScores Page"
 
     def manage_game_reset(self, instance):
         pop_up_layout = BoxLayout(orientation='vertical', padding=(10))
@@ -451,7 +499,7 @@ class SettingsScreen(GridLayout):
         pop_up_layout.add_widget(yes_button)
         pop_up_layout.add_widget(no_button)
 
-        # <<<<<< This is named "fake_instance" so that it doesn't get mixed with the main "instance" in the outer function manage_game_reset
+        # This is named "fake_instance" so that it doesn't get mixed with the main "instance" in the outer function manage_game_reset
         def reset_game(fake_instance):
             if instance != None:
                 with open("login_info.txt", "r+") as file:
@@ -459,8 +507,8 @@ class SettingsScreen(GridLayout):
 
                     file.seek(0)
                     file.truncate()
-                    file.write(first_line.strip("\n"))
-                
+                    file.write(first_line)
+
                 with open("highscores.txt", "r+") as file:
                     first_line = file.readline()
 
@@ -477,10 +525,10 @@ class SettingsScreen(GridLayout):
             tic_tac_toe.players_page.add_widget(
                 tic_tac_toe.players_page.go_back)
 
-            deletion_message.text = "Success! This popup will dismiss in 2 seconds."
+            deletion_message.text = "Success! This popup will dismiss any time now."
             deletion_message.color = [0, 1, 0, 1]
 
-            Clock.schedule_once(popup.dismiss, 2)
+            Clock.schedule_once(popup.dismiss, 0.5)
 
         popup = Popup(title='Game reset confirmation', title_size=(30),
                       title_align='center', content=pop_up_layout,
@@ -528,35 +576,29 @@ class ManagePlayers(GridLayout):
                 pop_up_layout.add_widget(yes_button)
                 pop_up_layout.add_widget(no_button)
 
-                def delete_player(fake_instance): 
-                    # The parameter is named "fake_instance" so that it doesn't get mixed with the main 
+                def delete_player(fake_instance):
+                    # The parameter is named "fake_instance" so that it doesn't get mixed with the main
                     # "instance" in the outer function manage_player_deletion
 
                     for label in labels_dict.values():
                         if label.text in instance.text:
                             for data in file_contents:
-                                line_index = file_contents.index(data) + 1
 
-                                # <<<<<< Stripping the whitespace between first and last name
+                                # Stripping the whitespace between first and last name
                                 if label.text.replace(" ", "") == "".join(data.split(",")[0] + data.split(",")[1]):
 
                                     with open("login_info.txt", "r") as f:
                                         lines = f.readlines()
-                                        # This checks if the player information if the very last entry in our data file or not
-                                        if line_index == len(lines) - 1:
-                                            last_line_stripped = lines[-2].strip(
-                                                "\n")
-                                            lines[-2] = last_line_stripped
 
                                     with open("login_info.txt", "w") as f:
                                         for line in lines:
                                             if line.strip("\n") != data:
                                                 f.write(line)
 
-                    deletion_message.text = "Success! This popup will dismiss in 2 seconds."
+                    deletion_message.text = "Success! This popup will dismiss any time now."
                     deletion_message.color = [0, 1, 0, 1]
 
-                    Clock.schedule_once(popup.dismiss, 2)
+                    Clock.schedule_once(popup.dismiss, 0.5)
 
                 popup = Popup(title='Player deletion confirmation', title_size=(30),
                               title_align='center', content=pop_up_layout,

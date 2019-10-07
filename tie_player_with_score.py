@@ -2,7 +2,7 @@ import os
 
 if not os.path.isfile("highscores.txt"):
     with open("highscores.txt", "w+") as file:
-        file.write("name,player_score")
+        file.write("name,player_score\n")
 
 player_info = {}
 
