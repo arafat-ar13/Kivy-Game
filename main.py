@@ -24,9 +24,6 @@ if not os.path.isfile("login_info.txt"):
     with open("login_info.txt", "w+") as file:
         file.write("first_name,last_name,email,password")
 
-if not os.path.isfile("highscores.txt"):
-    with open("highscores.txt", "w+") as file:
-        file.write("name,player_score")
 
 class WelcomeScreen(GridLayout):
     def __init__(self, **kwargs):
@@ -531,8 +528,9 @@ class ManagePlayers(GridLayout):
                 pop_up_layout.add_widget(yes_button)
                 pop_up_layout.add_widget(no_button)
 
-                # <<<<<< This is named "fake_instance" so that it doesn't get mixed with the main "instance" in the outer function manage_player_deletion
-                def delete_player(fake_instance):
+                def delete_player(fake_instance): 
+                    # The parameter is named "fake_instance" so that it doesn't get mixed with the main 
+                    # "instance" in the outer function manage_player_deletion
 
                     for label in labels_dict.values():
                         if label.text in instance.text:

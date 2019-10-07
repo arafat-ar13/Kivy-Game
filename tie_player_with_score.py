@@ -1,3 +1,9 @@
+import os
+
+if not os.path.isfile("highscores.txt"):
+    with open("highscores.txt", "w+") as file:
+        file.write("name,player_score")
+
 player_info = {}
 
 with open("highscores.txt", "r") as highscores_file:
