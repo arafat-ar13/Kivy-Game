@@ -15,6 +15,7 @@ from kivy.uix.screenmanager import Screen, ScreenManager, SwapTransition
 from kivy.uix.textinput import TextInput
 
 from game_ai import Ai
+from tie_player_with_score import tie_player
 
 Config.set('graphics', 'width', '500')
 Config.set('graphics', 'height', '400')
@@ -25,7 +26,7 @@ if not os.path.isfile("login_info.txt"):
 
 if not os.path.isfile("highscores.txt"):
     with open("highscores.txt", "w+") as file:
-        file.write("name,player_score,ai_score")
+        file.write("name,player_score")
 
 class WelcomeScreen(GridLayout):
     def __init__(self, **kwargs):
@@ -158,6 +159,10 @@ class SignupScreen(GridLayout):
 
         with open("login_info.txt", "a") as file:
             file.write(f"\n{first_name},{last_name},{email},{password}")
+        with open("highscores.txt", "a") as file:
+            file.write(f"{first_name} {last_name},{0}\n")
+        
+        tic_tac_toe.login_page.account_query_for[2] = f"{first_name} {last_name}"
 
 
 class LoginScreen(GridLayout):
@@ -250,15 +255,20 @@ class HomeScreen(GridLayout):
         message_animation.start(self.message)
 
         # Adding a button to go back to the login screen
-        self.back = Button(text="Logout", font_size=30, size_hint=(0.6, 0.2))
+        self.back = Button(text="Start your game", font_size=30, size_hint=(0.6, 0.2))
         self.add_widget(self.back)
-        self.back.bind(on_release=self.logout)
+        self.back.bind(on_release=self.enter_game_screen)
+
+        # Adding a button to go the highscores screen
+        self.highscores = Button(text="View you scores", font_size=28, size_hint=(0.55, 0.19))
+        self.add_widget(self.highscores)
+        self.highscores.bind(on_press=self.enter_scores_screen)
 
         # Adding a button to start the game
         self.game_start = Button(
-            text="Start your game", font_size=23, size_hint=(0.6, 0.2))
+            text="Logout", font_size=23, size_hint=(0.6, 0.2))
         self.add_widget(self.game_start)
-        self.game_start.bind(on_press=self.enter_game_screen)
+        self.game_start.bind(on_press=self.logout)
 
     def update_info(self, message):
         self.message.text = message
@@ -268,6 +278,9 @@ class HomeScreen(GridLayout):
 
     def enter_game_screen(self, *_):
         tic_tac_toe.screen_manager.current = "Game Page"
+
+    def enter_scores_screen(self, *_):
+        tic_tac_toe.screen_manager.current = "HighScores Page"
 
     def logout(self, *_):
         tic_tac_toe.screen_manager.current = "Login Page"
@@ -334,6 +347,9 @@ class GameScreen(GridLayout):
                 self.buttons_dict, instance, computer_button_instance, instance_id, computer_button_id)
             setattr(instance, "checked_winner_on", True)
 
+        if winner != "" and winner == "Player":
+            tie_player(tic_tac_toe.login_page.account_query_for[2])
+
         Clock.schedule_once(lambda instance: self.game_over(self.moves_counter, winner), 0.6)
 
     def game_over(self, moves_counter, winner):
@@ -386,6 +402,11 @@ class GameScreen(GridLayout):
         if back_to_user_home:
             tic_tac_toe.screen_manager.current = "Home Page"
 
+class HighScoresScreen(GridLayout):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.cols = 1
+
 
 class SettingsScreen(GridLayout):
     def __init__(self, **kwargs):
@@ -437,6 +458,13 @@ class SettingsScreen(GridLayout):
         def reset_game(fake_instance):
             if instance != None:
                 with open("login_info.txt", "r+") as file:
+                    first_line = file.readline()
+
+                    file.seek(0)
+                    file.truncate()
+                    file.write(first_line.strip("\n"))
+                
+                with open("highscores.txt", "r+") as file:
                     first_line = file.readline()
 
                     file.seek(0)
@@ -598,6 +626,12 @@ class MyApp(App):
         self.game_page = GameScreen()
         screen = Screen(name="Game Page")
         screen.add_widget(self.game_page)
+        self.screen_manager.add_widget(screen)
+
+        # High Scores Screen
+        self.highscores_page = HighScoresScreen()
+        screen = Screen(name="HighScores Page")
+        screen.add_widget(self.highscores_page)
         self.screen_manager.add_widget(screen)
 
         # Making a settings screen for managing certain things in the game
