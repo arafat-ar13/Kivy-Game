@@ -35,14 +35,14 @@ If you use virtualenv to manage and create your enviroments then follow these in
 * **On Windows (using Command Prompt)**:
   * `kivy-virtualenv\Scripts\activate`
 * **On Windows (using Git Bash or WSL)**:
-  * `source kivy-virtualenv/Scripts/activate`
+  * `source kivy-virtualenv/Scripts/activate`  (If it doesn't work, try without `source`)
 * **On Mac/Linux**:
   * `source kivy-development/bin/activate`
-* Once activated run:
+* Once activated, run:
 *  **If using Command Promt**:
-   * `pipenv install -r ..\requirements\requirements.txt`
+   * `pip install -r requirements\requirements.txt`
 * **If using Linux/Mac/Git Bash on Windows/WSL/or any Unix terminal**:
-   * `pipenv install -r ../requirements/requirements.txt` 
+   * `pip install -r requirements/requirements.txt` 
 * Then run `python main.py` to run the game
 
 
@@ -57,9 +57,9 @@ If you don't have or use Conda or Pipenv and would like to use the env manager b
   * `venv/Scripts/activate.bat`
 * **On Mac/Linux**:
   * `source venv/bin/activate`
-* Once activate, run the following to get Kivy and its dependencies:
+* Once activated, run the following to get Kivy and its dependencies:
 *  **If using Command Promt**:
-   * `pipenv install -r ..\requirements\requirements.txt`
+   * `pip install -r requirements\requirements.txt`
 * **If using Linux/Mac/Git Bash on Windows/WSL/or any Unix terminal**:
-   * `pipenv install -r ../requirements/requirements.txt` 
+   * `pip install -r requirements/requirements.txt` 
 * Lastly, run `python main.py` to run the game.
