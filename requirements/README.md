@@ -18,9 +18,9 @@ If you use Pipenv then you can use the requirements.txt file included to run the
 * Make a new directory named "kivy-pipenv" with `mkdir "kivy-pipenv"` and navigate to that directory.
 * To create an environment in the "kivy-pipenv" directory and install Kivy and its dependencies from the requirements.txt file at once run:
 *  **If using Command Promt**:
-  * `pipenv install -r ..\requirements\requirements.txt`
+   * `pipenv install -r ..\requirements\requirements.txt`
 * **If using Linux/Mac/Git Bash on Windows/WSL/or any Unix terminal**:
-  * `pipenv install -r ../requirements/requirements.txt`  
+   * `pipenv install -r ../requirements/requirements.txt`  
 
 This directory should now contain Pipfile and Piplock files.
 * Run `pipenv shell` while you are still in "kivy-pipenv" directory to activate the virtual environment
@@ -33,19 +33,23 @@ If you use virtualenv to manage and create your enviroments then follow these in
 * Run `virtualenv kivy-virtualenv` to create a new environment directory. 
 * Don't navigate to the new "kivy-virtualenv" directory and while still in the cloned directory, run:
 * **On Windows (using Command Prompt)**:
-  * `kivy-development\Scripts\activate`
+  * `kivy-virtualenv\Scripts\activate`
 * **On Windows (using Git Bash or WSL)**:
-  * `source kivy-development/Scripts/activate`
+  * `source kivy-virtualenv/Scripts/activate`
 * **On Mac/Linux**:
   * `source kivy-development/bin/activate`
-* Once activated, run `pip install -r requirements/requirements.txt` to get Kivy along with its dependencies
+* Once activated run:
+*  **If using Command Promt**:
+   * `pipenv install -r ..\requirements\requirements.txt`
+* **If using Linux/Mac/Git Bash on Windows/WSL/or any Unix terminal**:
+   * `pipenv install -r ../requirements/requirements.txt` 
 * Then run `python main.py` to run the game
 
 
 ## Run with Venv
 If you don't have or use Conda or Pipenv and would like to use the env manager built-in to the Python stdlib then these are the instructions to get the game running with Venv
 * Navigate to the cloned directory
-* Run `python3 -m venv venv`. You should see a new directory in you cloned one named "venv". By convention, the environment you want to create with Venv should be named "venv".
+* Run `python -m venv venv`. You should see a new directory in you cloned one named "venv". By convention, the environment you want to create with Venv should be named "venv".
 * Don't navigate to the "venv" directory and while still in the cloned directory run the following to activate the envrionment:
 * **On Windows (using Command Prompt)**:
   * `venv\Scripts\activate.bat`
@@ -53,5 +57,9 @@ If you don't have or use Conda or Pipenv and would like to use the env manager b
   * `venv/Scripts/activate.bat`
 * **On Mac/Linux**:
   * `source venv/bin/activate`
-* Once the environment is activated, install Kivy and its dependencies by running `pip install -r requirements/requirements.txt`
+* Once activate, run the following to get Kivy and its dependencies:
+*  **If using Command Promt**:
+   * `pipenv install -r ..\requirements\requirements.txt`
+* **If using Linux/Mac/Git Bash on Windows/WSL/or any Unix terminal**:
+   * `pipenv install -r ../requirements/requirements.txt` 
 * Lastly, run `python main.py` to run the game.
