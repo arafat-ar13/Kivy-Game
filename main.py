@@ -259,7 +259,7 @@ class HomeScreen(GridLayout):
 
         # Adding a button to go the highscores screen
         self.highscores = Button(
-            text="View you scores", font_size=28, size_hint=(0.55, 0.19))
+            text="View high scores", font_size=28, size_hint=(0.55, 0.19))
         self.add_widget(self.highscores)
         self.highscores.bind(on_press=self.enter_scores_screen)
 
@@ -414,7 +414,6 @@ class HighScoresScreen(GridLayout):
         self.inside = GridLayout()
         self.inside.cols = 2
         self.inside.rows = len(self.file.readlines())
-        self.rows = self.inside.rows
         self.file.close()
 
         self.name_label = Label(text="Name")
