@@ -321,6 +321,8 @@ class GameScreen(GridLayout):
 
             self.moves_counter += 1
 
+        winner = ""
+
         computer_move = self.ai.ai_move
         computer_button_instance = ""
         computer_button_id = 0
@@ -360,7 +362,7 @@ class GameScreen(GridLayout):
             # Setting up the popup_title depending on who the winner is or if no one won
             popup_title = f"{tic_tac_toe.login_page.account_query_for[2]} is the winner!" if winner == "Player" else "AI beat your ass!"
             popup = Popup(title=popup_title if winner != "" else "It's a tie!!",
-                          content=pop_up_layout, size_hint=(0.8, 0.7))
+                          content=pop_up_layout, size_hint=(0.8, 0.7), auto_dismiss=False)
 
             # Setting up the popup message depending on who won. ALso setting up the color
             popup_msg = "You have won the game!!" if winner == "Player" else "You have lost the game!!"
@@ -554,6 +556,14 @@ class ManagePlayers(GridLayout):
         self.inside.rows = len(self.file.readlines())
         self.file.close()
 
+        self.highscores = open("highscores.txt", "r")
+        self.file = self.highscores.readlines()[1:]
+        # Here we are reading all the scores of each players and also converting them to integers and stripping of
+        # the newline character
+        self.scores = [int(entry.split(",")[1].strip("\n"))
+                       for entry in self.file]
+        self.highscores.close()
+
         with open("login_info.txt", "r") as file:
             file_contents = file.readlines()[1:]
             file_contents = [content.strip("\n") for content in file_contents]
@@ -593,6 +603,16 @@ class ManagePlayers(GridLayout):
                                         for line in lines:
                                             if line.strip("\n") != data:
                                                 f.write(line)
+
+                    with open("highscores.txt", "r") as f:
+                        lines = f.readlines()
+
+                    with open("highscores.txt", "w") as f:
+                        for line in lines:
+                            name, _ = line.split(",")
+
+                            if name not in instance.text:
+                                f.write(line)
 
                     deletion_message.text = "Success! This popup will dismiss any time now."
                     deletion_message.color = [0, 1, 0, 1]
