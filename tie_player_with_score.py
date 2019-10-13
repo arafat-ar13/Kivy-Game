@@ -15,7 +15,7 @@ with open("highscores.txt", "r") as highscores_file:
         player_info[name] = score
 
 
-def tie_player(player_name):
+def tie_player(player_name, winner):
 
     with open("highscores.txt", "r+") as highscores_file:
         first_line = highscores_file.readline()
@@ -25,9 +25,9 @@ def tie_player(player_name):
             name, score = entry.strip("\n").split(",")
 
             if player_name == name:
-                player_info[player_name] = int(score) + 1
+                player_info[player_name] = int(score) + 1 if winner == "Player" else int(score) - 1
     
     with open("highscores.txt", "r+") as file:
         file.write(first_line)
         for name, score in player_info.items():
-            file.write(f"{name},{score}\n")
+            file.write(f"{name},{str(score)}\n")
