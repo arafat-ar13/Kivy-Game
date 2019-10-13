@@ -1,7 +1,5 @@
-import math
 import os
 
-import kivy
 from kivy.animation import Animation
 from kivy.app import App
 from kivy.clock import Clock
@@ -13,6 +11,7 @@ from kivy.uix.label import Label
 from kivy.uix.popup import Popup
 from kivy.uix.screenmanager import Screen, ScreenManager, SwapTransition
 from kivy.uix.textinput import TextInput
+from kivy.core.audio import SoundLoader
 
 from game_ai import Ai
 from tie_player_with_score import tie_player
@@ -107,7 +106,7 @@ class SignupScreen(GridLayout):
         self.signup = Button(text="Sign up", font_size=30,
                              size_hint=(1.0, 0.6))
         self.add_widget(self.signup)
-        # <<<<< It's important to check if the password fields are empty before checking if they are correct or not
+        # It's important to check if the password fields are empty before checking if they are correct or not
         self.signup.bind(on_press=self.check_if_empty)
         self.signup.bind(on_press=self.check_password)
 
@@ -130,7 +129,7 @@ class SignupScreen(GridLayout):
                 popup.open()
 
                 tic_tac_toe.home_page.update_info(
-                    "Welcome to your home page")
+                    f"Welcome to your NEW home page {self.first_name.text} {self.last_name.text}")
                 tic_tac_toe.screen_manager.current = "Home Page"
 
             else:
@@ -159,7 +158,11 @@ class SignupScreen(GridLayout):
         with open("highscores.txt", "a") as file:
             file.write(f"{first_name} {last_name},{0}\n")
 
-        tic_tac_toe.login_page.account_query_for[2] = f"{first_name} {last_name}"
+        # Passing the name of the newly signed up user to highscores page and game page
+        # The reason is so that highscores page can show the "You" and game page can
+        # update the new player's scores properly
+        tic_tac_toe.highscores_page.current_player = f"{first_name} {last_name}"
+        tic_tac_toe.game_page.current_player = f"{first_name} {last_name}"
 
 
 class LoginScreen(GridLayout):
@@ -228,6 +231,9 @@ class LoginScreen(GridLayout):
                     allowance = True
                 else:
                     self.password.text = ""
+                    # If the password is incorrect, we set the password in account_query_for to "password"
+                    # This fills some security vulnerabilities
+                    self.account_query_for[1] = "password"
 
                     popup = Popup(title="Wrong password", content=Label(
                         text="Your password is incorrect", color=[1, 0, 0, 1]), size_hint=(0.6, 0.2))
@@ -238,6 +244,15 @@ class LoginScreen(GridLayout):
 
                     tic_tac_toe.home_page.update_info(
                         f"Welcome to your Home Page, {self.account_query_for[2]}")
+
+                    # We are passing the name of the player who successfully logged in to the highscores page
+                    # This is necessary as we will reset the placeholders in account_query_for
+                    tic_tac_toe.highscores_page.current_player = self.account_query_for[2]
+                    # Passing name to the game page so it can write to file
+                    tic_tac_toe.game_page.current_player = self.account_query_for[2]
+
+                    self.account_query_for = ["email", "password", "name"]
+
                     tic_tac_toe.screen_manager.current = "Home Page"
 
 
@@ -280,6 +295,9 @@ class HomeScreen(GridLayout):
 
     def enter_scores_screen(self, *_):
         tic_tac_toe.highscores_page.here_from = "Home Page"
+        tic_tac_toe.highscores_page.clear_widgets()
+        tic_tac_toe.highscores_page.you = True
+        tic_tac_toe.highscores_page.design_scores_page()
         tic_tac_toe.screen_manager.current = "HighScores Page"
 
     def logout(self, *_):
@@ -294,6 +312,7 @@ class GameScreen(GridLayout):
         self.rows = 3
         self.buttons_dict = {}
         self.moves_counter = 0
+        self.current_player = ""
 
         # Setting up a list to store the game input options
         self.fill_options = ["O", "X"]
@@ -321,17 +340,17 @@ class GameScreen(GridLayout):
 
             self.moves_counter += 1
 
+        # Setting winner to an empty string makes sure that no error occurs when a button on 
+        # the board is pressed twice
         winner = ""
 
         computer_move = self.ai.ai_move
-        computer_button_instance = ""
         computer_button_id = 0
         for button in self.buttons_dict.values():
 
             if computer_move == button[0].pos:
                 if not hasattr(button[0], "pressed") or not button[0].pressed:
                     button[0].text = self.ai.ai_option
-                    computer_button_instance = button[0]
                     computer_button_id = button[1]
                     setattr(button[0], "pressed", True)
                     setattr(button[0], "checked_winner_on", True)
@@ -346,23 +365,34 @@ class GameScreen(GridLayout):
 
         if not hasattr(instance, "checked_winner_on"):
             winner = self.ai.decide_winner(
-                self.buttons_dict, instance, computer_button_instance, instance_id, computer_button_id)
+                self.buttons_dict, instance_id, computer_button_id)
             setattr(instance, "checked_winner_on", True)
 
-        if winner != "" and winner == "Player":
-            tie_player(tic_tac_toe.login_page.account_query_for[2])
+        if winner != "":
+            tie_player(self.current_player, winner)
 
-        Clock.schedule_once(lambda instance: self.game_over(
-            self.moves_counter, winner), 0.6)
+        self.game_over(self.moves_counter, winner)
 
     def game_over(self, moves_counter, winner):
         if self.moves_counter == (self.cols * self.rows) or winner != "":
             pop_up_layout = BoxLayout(orientation='vertical', padding=(10))
 
             # Setting up the popup_title depending on who the winner is or if no one won
-            popup_title = f"{tic_tac_toe.login_page.account_query_for[2]} is the winner!" if winner == "Player" else "AI beat your ass!"
+            popup_title = f"{self.current_player} is the winner!" if winner == "Player" else "AI beat your ass!"
             popup = Popup(title=popup_title if winner != "" else "It's a tie!!",
                           content=pop_up_layout, size_hint=(0.8, 0.7), auto_dismiss=False)
+
+            if os.path.isdir(r"Game Sounds/"):
+                # Playing a "win" sound if the winner is the player
+                if winner == "Player":
+                    win_sound = SoundLoader.load(r"Game Sounds/win_sound.wav")
+                    if win_sound:
+                        win_sound.play()
+                # And here is the loss sound
+                elif winner == "Ai":
+                    loss_sound = SoundLoader.load(r"Game Sounds/loss_sound.wav")
+                    if loss_sound:
+                        loss_sound.play()
 
             # Setting up the popup message depending on who won. ALso setting up the color
             popup_msg = "You have won the game!!" if winner == "Player" else "You have lost the game!!"
@@ -377,11 +407,14 @@ class GameScreen(GridLayout):
                 text="Go back", on_press=lambda instance: self.reset_board(popup, True))
             another_game = Button(text="Or...player another game!!",
                                   on_press=lambda instance: self.reset_board(popup, False))
+            
+            back_to_user_page.bind(on_press=popup.dismiss)
+            another_game.bind(on_press=popup.dismiss)
 
             pop_up_layout.add_widget(back_to_user_page)
             pop_up_layout.add_widget(another_game)
 
-            popup.open()
+            Clock.schedule_once(popup.open, 0.6)
 
     def reset_board(self, popup, back_to_user_home):
 
@@ -393,8 +426,6 @@ class GameScreen(GridLayout):
 
             button[0].background_normal = "atlas://data/images/defaulttheme/button"
             button[0].background_color = (1, 1, 1, 1)
-
-        popup.dismiss()
 
         self.moves_counter = 0
         self.ai.available_tiles = self.ai.all_pos[:]
@@ -410,8 +441,11 @@ class HighScoresScreen(GridLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.here_from = ""
-
         self.cols = 1
+        self.you = False
+        self.current_player = ""
+
+    def design_scores_page(self):
         self.file = open("highscores.txt", "r")
         self.inside = GridLayout()
         self.inside.cols = 2
@@ -440,17 +474,24 @@ class HighScoresScreen(GridLayout):
 
             for name, score in zip(names, scores):
 
-                self.inside.add_widget(Label(text=f"{name}"))
-                self.inside.add_widget(Label(text=str(score)))
+                # Showing a "You" immediately after the name of the player who is logged in
+                if self.you and self.current_player == name:
+                    self.inside.add_widget(
+                        Label(text=f"{name} (You)", color=[0, 1, 0, 1]))
+                else:
+                    self.inside.add_widget(Label(text=f"{name}"))
+
+                self.inside.add_widget(Label(text=str(score), color=[1, 0, 0, 1] if score < 0 else [1, 1, 1, 1])) # Showing red if score negative
 
         self.add_widget(self.inside)
 
         self.back_button = Button(text="Go back", size_hint=(0.2, 0.18))
         self.add_widget(self.back_button)
         self.back_button.bind(on_press=self.go_back)
-    
+
     def go_back(self, instance):
         tic_tac_toe.screen_manager.current = self.here_from
+        self.you = False
 
 
 class SettingsScreen(GridLayout):
@@ -484,6 +525,8 @@ class SettingsScreen(GridLayout):
 
     def view_high_scores(self, instance):
         tic_tac_toe.highscores_page.here_from = "Settings Page"
+        tic_tac_toe.highscores_page.clear_widgets()
+        tic_tac_toe.highscores_page.design_scores_page()
         tic_tac_toe.screen_manager.current = "HighScores Page"
 
     def manage_game_reset(self, instance):
@@ -542,13 +585,17 @@ class SettingsScreen(GridLayout):
         popup.open()
 
     def manage_players(self, instance):
+        tic_tac_toe.players_page.clear_widgets()
+        tic_tac_toe.players_page.design_players_page()
         tic_tac_toe.screen_manager.current = "Manage Players Page"
+        
 
 
 class ManagePlayers(GridLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
+    def design_players_page(self):
         self.inside = GridLayout()
 
         self.file = open("login_info.txt", "r")
@@ -591,9 +638,14 @@ class ManagePlayers(GridLayout):
 
                     for label in labels_dict.values():
                         if label.text in instance.text:
+                            # This removes the label that got matched as well as the button
+                            self.inside.remove_widget(label)
+                            self.inside.remove_widget(instance)
+
                             for data in file_contents:
 
                                 # Stripping the whitespace between first and last name
+                                # The code removes the player from the login_info.txt file
                                 if label.text.replace(" ", "") == "".join(data.split(",")[0] + data.split(",")[1]):
 
                                     with open("login_info.txt", "r") as f:
@@ -604,6 +656,7 @@ class ManagePlayers(GridLayout):
                                             if line.strip("\n") != data:
                                                 f.write(line)
 
+                    # This code removes the player from the highscores.txt file
                     with open("highscores.txt", "r") as f:
                         lines = f.readlines()
 
@@ -614,6 +667,7 @@ class ManagePlayers(GridLayout):
                             if name not in instance.text:
                                 f.write(line)
 
+                    # Changing the warning message and displaying the success message in green color
                     deletion_message.text = "Success! This popup will dismiss any time now."
                     deletion_message.color = [0, 1, 0, 1]
 
@@ -654,6 +708,7 @@ class ManagePlayers(GridLayout):
 
 class MyApp(App):
     def build(self):
+        self.title = "Tic Tac Toe"
         self.screen_manager = ScreenManager(transition=SwapTransition())
 
         # Creating all of our screens to show up
