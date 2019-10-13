@@ -51,7 +51,7 @@ class Ai():
             self.ai_move = random.choice(self.available_tiles)
             self.available_tiles.remove(self.ai_move)
 
-    def decide_winner(self, butt_dict, player_butt, ai_butt, player_butt_id, ai_butt_id):
+    def decide_winner(self, butt_dict, player_butt_id, ai_butt_id):
         self.player_moves.append(player_butt_id)
         self.ai_moves.append(ai_butt_id)
 
