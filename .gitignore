@@ -1,3 +1,4 @@
 .vscode/
 login_info.txt
 highscores.txt
+__pycache__
