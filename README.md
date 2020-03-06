@@ -19,7 +19,8 @@ The `Game Sounds` folder is not to be touched as well. As removing this will rem
 
 ## To get the game
 
-The exe version of this game is on its way and will soon be available. For now, it's best to try out the Python project by following the instructions in the `requirements` directory
+  * The first version of this game has been released. To get the exe file please get it from the Releases page. 
+  * For those who want to build the game right from the source code just follow the instructions from the requirements folder.
 
 ## How to play
 
