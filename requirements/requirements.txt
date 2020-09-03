@@ -20,7 +20,7 @@ mkl-service==2.3.0
 numpy==1.18.1
 olefile==0.46
 pefile==2019.4.18
-Pillow==7.0.0
+Pillow>=7.1.0
 pycodestyle==2.5.0
 pycrypto==2.6.1
 Pygments==2.6.1
