@@ -23,7 +23,7 @@ pefile==2019.4.18
 Pillow>=7.1.0
 pycodestyle==2.5.0
 pycrypto==2.6.1
-Pygments==2.6.1
+Pygments==2.7.4
 PyInstaller==3.6
 pylint==2.4.4
 pywin32==227
